@@ -4,8 +4,8 @@ close all
 % Solve DE numerically using ode45
 m_num   = -1;
 b_num = 5;
-l_num = 0.5;
-h_num = 2;
+l_num = 3;
+h_num = 10;
 k_num = 1;
 m_b_num = 0.5;
 m_c_num = 0.5;
@@ -23,36 +23,77 @@ r_c = @(rz)[rz*cos(theta_num);b_num-rz*sin(theta_num)];
 r_b = @(rz, phi) [rz*cos(theta_num)+h_num*sin(theta_num)+l_num*sin(phi-theta_num);b_num-rz*sin(theta_num)+h_num*cos(theta_num)-l_num*cos(phi-theta_num)];
 % r_k = @(rz) [rz*cos(theta_num)+b_num/m_num;b_num-rz*sin(theta_num)];
 r_z = @(rz) [rz*cos(theta_num);-rz*sin(theta_num)];
+lineFun = @(xx) (m_num * xx + b_num);
 
 % Draw the figure
 figure
 
 % Plot options (change if necessary)
 DEBUG = false;
+PLOT_POS_VECTORS = false;
+axis('equal');
 
-n_points = length(Y(:,1));
+
+n_points = length(Y(:,1))
 for k=1:n_points
     % Wipe the slate clean
     clf
 
     % Plot inclined plane
     line_x = linspace(-30, 30, n_points);
-    line_y = m_num * line_x + b_num;
+    line_y = lineFun(line_x);
     plot(line_x, line_y, 'k', 'LineWidth', 3)
     
+
+    % Calculate position vectors
+    posC = r_c(Y(k,1));
+    posB = r_b(Y(k,1), Y(k,3));
 
     
     % Body C
     hold on
-    posC = r_c(Y(k,1));
-    quiver(0, 0, posC(1), posC(2), 'Color', '#0072BD', 'LineWidth', 2);
-    plot(posC(1), posC(2), 's', 'MarkerSize', 30, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', '#BBBBBB')
+    % plot(posC(1), posC(2), 's', 'MarkerSize', 30, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', '#BBBBBB')
+
+    % Draw stick of height h_num and width w_stick
+    w_stick = 0.25;
+    A_1 = [posC(1) - w_stick; lineFun(posC(1) - w_stick)];
+    A_2 = [posC(1) + w_stick; lineFun(posC(1) + w_stick)];
+    B_1 = A_1 + h_num * [sin(theta_num); cos(theta_num)];
+    B_2 = A_2 + h_num * [sin(theta_num); cos(theta_num)];
+    hold on
+    fill([A_1(1) B_1(1) B_2(1) A_2(1)], [A_1(2) B_1(2) B_2(2) A_2(2)], 'black', 'FaceAlpha', 0.3);
+
+    % Draw string of length l between the middle of the stick and rB
+    plot([(B_1(1) + B_2(1))/2, posB(1)], [(B_1(2) + B_2(2))/2, posB(2)], 'black', 'LineWidth', 2)
+    
+    % Draw rectangle
+    w_rect = 2;
+    h_rect = 3;
+    A_1 = [posC(1) - w_rect; lineFun(posC(1) - w_rect)];
+    A_2 = [posC(1) + w_rect; lineFun(posC(1) + w_rect)];
+    B_1 = A_1 + h_rect * [sin(theta_num); cos(theta_num)];
+    B_2 = A_2 + h_rect * [sin(theta_num); cos(theta_num)];
+    hold on
+    fill([A_1(1) B_1(1) B_2(1) A_2(1)], [A_1(2) B_1(2) B_2(2) A_2(2)], [0.6 0.6 0.6]);
+
+    % Draw spring
+    NE = 10;
+    NR = k_num;
+    [x_spring, y_spring] = spring((A_2(1) + B_2(1)) / 2, (A_2(2) + B_2(2)) / 2, -b_num/m_num, 0, NE, S_num, NR);
+    plot(x_spring,y_spring,'black','LineWidth',2);
+    
     
     % Body B
     hold on
-    posB = r_b(Y(k,1), Y(k,3));
-    quiver(0, 0, posB(1), posB(2), 'Color', '#7E2F8E', 'LineWidth', 2);
-    plot(posB(1), posB(2), 'o', 'MarkerSize', 20, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', '#BBBBBB');
+    
+    circles(posB(1), posB(2), 0.5, 'color', 'black', 'FaceAlpha', 0.4);
+
+    
+
+    if (PLOT_POS_VECTORS)
+        quiver(0, 0, posC(1), posC(2), 'Color', '#0072BD', 'LineWidth', 2);
+        quiver(0, 0, posB(1), posB(2), 'Color', '#7E2F8E', 'LineWidth', 2);
+    end
 
     
     
