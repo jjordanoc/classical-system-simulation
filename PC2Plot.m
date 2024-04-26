@@ -12,8 +12,8 @@ m_c_num = 0.5;
 S_num = 2;
 theta_num = atan(-m_num);
 g_num   = 9.81;
-tspan   = [0 10];
-Y0      = [4 0 0 0];
+tspan   = [0 20];
+Y0      = [-2 0 pi/4 0];
 options = odeset('RelTol',1e-6);
 % Use created .m file to solve DE 
 [t, Y]  = ode45(@PC2_sys,tspan,Y0,options,m_num,b_num,l_num,h_num,k_num,m_b_num,m_c_num,g_num,S_num);
