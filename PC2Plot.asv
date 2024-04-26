@@ -9,11 +9,13 @@ h_num = 10;
 k_num = 1;
 m_b_num = 0.5;
 m_c_num = 0.5;
-S_num = 2;
+S_num = 10;
 theta_num = atan(-m_num);
+z_0_num = 2;
+phi_0_num = pi/4;
 g_num   = 9.81;
-tspan   = [0 20];
-Y0      = [4 0 pi/4 0];
+tspan   = [0 7];
+Y0      = [z_0_num 0 phi_0_num 0];
 options = odeset('RelTol',1e-6);
 % Use created .m file to solve DE 
 [t, Y]  = ode45(@PC2_sys,tspan,Y0,options,m_num,b_num,l_num,h_num,k_num,m_b_num,m_c_num,g_num,S_num);
@@ -23,10 +25,15 @@ r_c = @(z)[-z*cos(theta_num)-(b_num/m_num);z*sin(theta_num)];
 r_b = @(z, phi) r_c(z) + [h_num*sin(theta_num) + l_num*sin(phi-theta_num); h_num*cos(theta_num)-l_num*cos(phi-theta_num)];
 % r_k = @(rz) [rz*cos(theta_num)+b_num/m_num;b_num-rz*sin(theta_num)];
 r_z = @(z) [-z*cos(theta_num);z*sin(theta_num)];
-lineFun = @(xx, mm) (mm * xx + b_num);
+lineFun = @(xx) (m_num * xx + b_num);
 
 % Draw the figure
-figure
+figure;
+
+% Start recording
+myVideo = VideoWriter('system', 'MPEG-4'); %open video file
+myVideo.FrameRate = 10;  %can adjust this, 5 - 10 works well for me
+open(myVideo)
 
 % Plot options (change if necessary)
 DEBUG = false;
@@ -44,13 +51,12 @@ for k=1:n_points
     % Plot inclined plane
     LINE_SPACE_SIZE = 10;
     line_x = linspace(-30, 30, LINE_SPACE_SIZE);
-    line_y = lineFun(line_x, m_num);
+    line_y = lineFun(line_x);
     plot(line_x, line_y, 'k', 'LineWidth', 3)
 
     % Plot 'wall'
     hold on
-    line_y = lineFun(line_x, -atan(p))
-    plot(line_x * sin(theta_num), line_y * cos(theta_num), 'k', 'LineWidth', 3)
+    plot(line_x, -line_y, 'k', 'LineWidth', 3)
     
     % Plot 'floor'
     hold on
@@ -58,8 +64,10 @@ for k=1:n_points
 
 
     % Calculate position vectors
-    posC = r_c(Y(k,1));
-    posB = r_b(Y(k,1), Y(k,3));
+    z = Y(k,1);
+    phi = Y(k,3);
+    posC = r_c(z);
+    posB = r_b(z, phi);
 
     
     % Body C
@@ -134,9 +142,15 @@ for k=1:n_points
     grid on
     xlabel('x')
     ylabel('y')
-    title(["Particle at frame ", k])
+    title([sprintf("m = %0.5f, ", m_num), sprintf("$z_0 = %0.5f$", z_0_num), sprintf("$\\varphi_0 = %0.5f$", phi_0_num)], 'Interpreter','latex')
+    text(17, 26, sprintf('$z = %0.5f$\n$\\varphi = %0.5f$', z, phi), 'Interpreter','latex')
 
     % Force matlab to draw the image
     drawnow
+
+    % pause(0.001) %Pause and grab frame
+    frame = getframe(gcf); % get frame
+    writeVideo(myVideo, frame);
 end
 
+close(myVideo)
