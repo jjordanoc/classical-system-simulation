@@ -9,20 +9,20 @@ h_num = 10;
 k_num = 1;
 m_b_num = 0.5;
 m_c_num = 0.5;
-S_num = 2;
+S_num = 10;
 theta_num = atan(-m_num);
 g_num   = 9.81;
 tspan   = [0 20];
-Y0      = [-2 0 pi/4 0];
+Y0      = [2 0 pi/4 0];
 options = odeset('RelTol',1e-6);
 % Use created .m file to solve DE 
 [t, Y]  = ode45(@PC2_sys,tspan,Y0,options,m_num,b_num,l_num,h_num,k_num,m_b_num,m_c_num,g_num,S_num);
 
 % Position vectors
-r_c = @(rz)[rz*cos(theta_num);b_num-rz*sin(theta_num)];
-r_b = @(rz, phi) [rz*cos(theta_num)+h_num*sin(theta_num)+l_num*sin(phi-theta_num);b_num-rz*sin(theta_num)+h_num*cos(theta_num)-l_num*cos(phi-theta_num)];
+r_c = @(z)[-z*cos(theta_num)-(b_num/m_num);z*sin(theta_num)];
+r_b = @(z, phi) r_c(z) + [h_num*sin(theta_num) + l_num*sin(phi-theta_num); h_num*cos(theta_num)-l_num*cos(phi-theta_num)];
 % r_k = @(rz) [rz*cos(theta_num)+b_num/m_num;b_num-rz*sin(theta_num)];
-r_z = @(rz) [rz*cos(theta_num);-rz*sin(theta_num)];
+r_z = @(z) [-z*cos(theta_num);z*sin(theta_num)];
 lineFun = @(xx) (m_num * xx + b_num);
 
 % Draw the figure
@@ -33,17 +33,28 @@ DEBUG = false;
 PLOT_POS_VECTORS = false;
 axis('equal');
 
-
+% Wipe the slate clean
 n_points = length(Y(:,1))
+
+
 for k=1:n_points
     % Wipe the slate clean
     clf
-
+    
     % Plot inclined plane
-    line_x = linspace(-30, 30, n_points);
+    LINE_SPACE_SIZE = 10;
+    line_x = linspace(-30, 30, LINE_SPACE_SIZE);
     line_y = lineFun(line_x);
     plot(line_x, line_y, 'k', 'LineWidth', 3)
+
+    % Plot 'wall'
+    hold on
+    plot(line_x, -line_y, 'k', 'LineWidth', 3)
     
+    % Plot 'floor'
+    hold on
+    plot(line_x, zeros(LINE_SPACE_SIZE), 'k', 'LineWidth', 3)
+
 
     % Calculate position vectors
     posC = r_c(Y(k,1));
@@ -51,7 +62,6 @@ for k=1:n_points
 
     
     % Body C
-    hold on
     % plot(posC(1), posC(2), 's', 'MarkerSize', 30, 'MarkerEdgeColor', 'black', 'MarkerFaceColor', '#BBBBBB')
 
     % Draw stick of height h_num and width w_stick
